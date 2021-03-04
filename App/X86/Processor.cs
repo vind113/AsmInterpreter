@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using static App.X86.Registers;
 
@@ -49,44 +50,116 @@ namespace App.X86
             }
         }
 
-        public void Mov(Registers name, byte value)
+        public void Mov(Registers destination, byte value)
         {
-            if (_hRegisterNames.Contains(name))
+            if (_hRegisterNames.Contains(destination))
             {
-                Registers fullRegisterName = _hRegisterNameToFullRegisterName[name];
+                Registers fullRegisterName = _hRegisterNameToFullRegisterName[destination];
                 _generalPurposeRegisters[fullRegisterName].MovH(value);
             }
             else
             {
-                _generalPurposeRegisters[name].Mov(value);
+                _generalPurposeRegisters[destination].Mov(value);
             }
         }
 
-        public void Mov(Registers name, ushort value)
+        public void Mov(Registers destination, ushort value)
         {
-            _generalPurposeRegisters[name].Mov(value);
+            _generalPurposeRegisters[destination].Mov(value);
         }
 
-        public void Mov(Registers name, uint value)
+        public void Mov(Registers destination, uint value)
         {
-            _generalPurposeRegisters[name].Mov(value);
+            _generalPurposeRegisters[destination].Mov(value);
         }
 
-        public void Mov(Registers name, ulong value)
+        public void Mov(Registers destination, ulong value)
         {
-            _generalPurposeRegisters[name].Mov(value);
+            _generalPurposeRegisters[destination].Mov(value);
+        }
+
+        public void Mov(Registers destination, Registers source)
+        {
+            if (_8BitRegisterNames.Contains(source))
+            {
+                if (_hRegisterNames.Contains(destination))
+                {
+                    _generalPurposeRegisters[destination].MovH(Convert.ToByte(_generalPurposeRegisters[source].Value));
+                }
+                else
+                {
+                    _generalPurposeRegisters[destination].Mov(Convert.ToByte(_generalPurposeRegisters[source].Value));
+                }
+            }
+            else if (_16BitRegisterNames.Contains(source))
+            {
+                _generalPurposeRegisters[destination].Mov(Convert.ToUInt16(_generalPurposeRegisters[source].Value));
+            }
+            else if (_32BitRegisterNames.Contains(source))
+            {
+                _generalPurposeRegisters[destination].Mov(Convert.ToUInt32(_generalPurposeRegisters[source].Value));
+            }
+            else if (_64BitRegisterNames.Contains(source))
+            {
+                _generalPurposeRegisters[destination].Mov(_generalPurposeRegisters[source].Value);
+            } 
+            else
+            {
+                throw new ArgumentException($"Source register \"{source}\" is not a valid register for this operation");
+            }
+        }
+
+        public void Mov(Registers destination, byte[] value)
+        {
+            if (_8BitRegisterNames.Contains(destination) && value.Length == 1)
+            {
+                if (_hRegisterNames.Contains(destination))
+                {
+                    _generalPurposeRegisters[destination].MovH(Convert.ToByte(value));
+                }
+                else
+                {
+                    _generalPurposeRegisters[destination].Mov(Convert.ToByte(value));
+                }
+            }
+            else if (_16BitRegisterNames.Contains(destination) && value.Length == 2)
+            {
+                _generalPurposeRegisters[destination].Mov(Convert.ToUInt16(value));
+            }
+            else if (_32BitRegisterNames.Contains(destination) && value.Length == 4)
+            {
+                _generalPurposeRegisters[destination].Mov(Convert.ToUInt32(value));
+            }
+            else if (_64BitRegisterNames.Contains(destination) && value.Length == 8)
+            {
+                _generalPurposeRegisters[destination].Mov(Convert.ToUInt64(value));
+            }
+            else
+            {
+                throw new ArgumentException($"Destination register \"{destination}\" and byte array \"{string.Join(',', value)}\" are not valid combination for this command");
+            }
         }
 
         public void Inc(Registers name)
         {
             if (_hRegisterNames.Contains(name))
             {
-                Registers fullRegisterName = _hRegisterNameToFullRegisterName[name];
-                _generalPurposeRegisters[fullRegisterName].IncH();
+                name = _hRegisterNameToFullRegisterName[name];
+            }
+
+            Register register = _generalPurposeRegisters[name];
+            if (_hRegisterNames.Contains(name))
+            {
+                register.IncH();
             }
             else
             {
-                _generalPurposeRegisters[name].Inc();
+                register.Inc();
+            }
+
+            if (register.Value == 0)
+            {
+                flagsRegister.SetZeroFlag();
             }
         }
 
@@ -94,12 +167,22 @@ namespace App.X86
         {
             if (_hRegisterNames.Contains(name))
             {
-                Registers fullRegisterName = _hRegisterNameToFullRegisterName[name];
-                _generalPurposeRegisters[fullRegisterName].DecH();
+                name = _hRegisterNameToFullRegisterName[name];
+            }
+
+            Register register = _generalPurposeRegisters[name];
+            if (_hRegisterNames.Contains(name))
+            {
+                register.DecH();
             }
             else
             {
-                _generalPurposeRegisters[name].Dec();
+                register.Dec();
+            }
+
+            if (register.Value == 0)
+            {
+                flagsRegister.SetZeroFlag();
             }
         }
     }

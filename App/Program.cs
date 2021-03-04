@@ -14,12 +14,7 @@ namespace App
 
             Processor processor = new Processor();
 
-            Console.WriteLine(DateTime.Now);
-            for (int i = 0; i<100_000_000; i++)
-            {
-                processor.Inc(eax);
-            }
-            Console.WriteLine(DateTime.Now);
+            processor.Mov(al, new byte[] { 12, 12 });
         }
     }
 
