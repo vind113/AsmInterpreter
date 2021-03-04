@@ -23,7 +23,7 @@ namespace App.X86
 
         private readonly Dictionary<Registers, Register> _generalPurposeRegisters = new Dictionary<Registers, Register>();
 
-        private Flags _flagsRegister = Flags.ZERO;
+        private readonly FlagsRegister flagsRegister = new FlagsRegister();
 
         public Processor()
         {
@@ -31,6 +31,13 @@ namespace App.X86
             this.InitializeRegister(new List<Registers> { rbx, ebx, bx, bl });
             this.InitializeRegister(new List<Registers> { rcx, ecx, cx, cl });
             this.InitializeRegister(new List<Registers> { rdx, edx, dx, dl });
+
+            this.InitializeRegister(new List<Registers> { rbp, ebp, bp, bpl });
+
+            this.InitializeRegister(new List<Registers> { rsi, esi, si, sil });
+            this.InitializeRegister(new List<Registers> { rdi, edi, di, dil });
+
+            this.InitializeRegister(new List<Registers> { rsp, esp, sp, spl });
         }
 
         private void InitializeRegister(List<Registers> names)
@@ -47,31 +54,27 @@ namespace App.X86
             if (_hRegisterNames.Contains(name))
             {
                 Registers fullRegisterName = _hRegisterNameToFullRegisterName[name];
-                ulong newValue = this._generalPurposeRegisters[fullRegisterName].Value & 0xFFFF_FFFF_FFFF_00FF | ((ulong)(value << 8));
-                _generalPurposeRegisters[fullRegisterName].Value = newValue;
+                _generalPurposeRegisters[fullRegisterName].MovH(value);
             }
             else
             {
-                ulong newValue = (_generalPurposeRegisters[name].Value & 0xFFFF_FFFF_FFFF_FF00) | value;
-                _generalPurposeRegisters[name].Value = newValue;
+                _generalPurposeRegisters[name].Mov(value);
             }
         }
 
         public void Mov(Registers name, ushort value)
         {
-            ulong newValue = (_generalPurposeRegisters[name].Value & 0xFFFF_FFFF_FFFF_0000) | value;
-            _generalPurposeRegisters[name].Value = newValue;
+            _generalPurposeRegisters[name].Mov(value);
         }
 
         public void Mov(Registers name, uint value)
         {
-            ulong newValue = (_generalPurposeRegisters[name].Value & 0xFFFF_FFFF_0000_0000) | value;
-            _generalPurposeRegisters[name].Value = newValue;
+            _generalPurposeRegisters[name].Mov(value);
         }
 
         public void Mov(Registers name, ulong value)
         {
-            _generalPurposeRegisters[name].Value = value;
+            _generalPurposeRegisters[name].Mov(value);
         }
 
         public void Inc(Registers name)
@@ -79,11 +82,11 @@ namespace App.X86
             if (_hRegisterNames.Contains(name))
             {
                 Registers fullRegisterName = _hRegisterNameToFullRegisterName[name];
-                _generalPurposeRegisters[fullRegisterName].Value += 1 << 8;
+                _generalPurposeRegisters[fullRegisterName].IncH();
             }
             else
             {
-                _generalPurposeRegisters[name].Value++;
+                _generalPurposeRegisters[name].Inc();
             }
         }
 
@@ -92,17 +95,12 @@ namespace App.X86
             if (_hRegisterNames.Contains(name))
             {
                 Registers fullRegisterName = _hRegisterNameToFullRegisterName[name];
-                _generalPurposeRegisters[fullRegisterName].Value -= 1 << 8;
+                _generalPurposeRegisters[fullRegisterName].DecH();
             }
             else
             {
-                _generalPurposeRegisters[name].Value--;
+                _generalPurposeRegisters[name].Dec();
             }
-        }
-
-        private void SetFlag(Flags flags)
-        {
-            _flagsRegister |= flags;
         }
     }
 }
